@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Returning to moneymap</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: grid; place-items: center;
+    padding: 24px;
+    font: 14px/1.5 ui-sans-serif, system-ui, sans-serif;
+    background: #fff; color: #000;
+  }
+  @media (prefers-color-scheme: dark) { body { background: #0a0a0a; color: #fff; } }
+  main { max-width: 30rem; border: 2px solid currentColor; padding: 20px 22px; }
+  h1 { margin: 0 0 10px; font-size: 1rem; text-transform: uppercase; letter-spacing: .085em; }
+  p { margin: 0 0 10px; }
+  a { color: inherit; }
+  code { font-family: ui-monospace, SFMono-Regular, monospace; word-break: break-all; }
+  .quiet { opacity: .7; }
+</style>
+<main>
+  <h1>Returning to moneymap</h1>
+  <p id="status">Sending you back to the app on your Mac…</p>
+  <p id="manual" hidden class="quiet">
+    If nothing happens, moneymap is not running. Start it, then
+    <a id="again" href="#">open this link</a>.
+  </p>
+</main>
+<script>
+  // This page exists only because Plaid requires an OAuth redirect URI to be a
+  // public HTTPS address: a bank will not redirect to localhost. It holds no
+  // data, stores nothing, and talks to no one. Its whole job is to hand the
+  // URL the bank produced back to moneymap, which runs on the user's own Mac.
+  //
+  // The destination is hardcoded on purpose. Reading it from a query parameter
+  // would make this an open redirect that any site could point anywhere.
+  (function () {
+    var APP = "http://localhost:3000/plaid/oauth";
+
+    // Plaid needs Link re-initialised with the exact URI the bank redirected
+    // to, so the original href is passed through whole rather than rebuilt
+    // from the parts we happen to recognise.
+    var target = APP
+      + (location.search || "?")
+      + (location.search ? "&" : "")
+      + "received_redirect_uri=" + encodeURIComponent(location.href);
+
+    document.getElementById("again").href = target;
+
+    // A moment on screen beats a flash the user cannot read if it fails.
+    setTimeout(function () { location.replace(target); }, 400);
+
+    // location.replace to a dead port leaves the page sitting here, so say so.
+    setTimeout(function () {
+      document.getElementById("status").textContent = "Could not reach moneymap.";
+      document.getElementById("manual").hidden = false;
+    }, 2500);
+  })();
+</script>
